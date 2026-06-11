@@ -1,0 +1,30 @@
+---
+name: verify-before-done
+description: Use when about to claim work is complete, fixed, or passing — before committing, opening a PR, marking a task done, or relaying a subagent's success report
+---
+
+# Verify Before Claiming Done
+
+Evidence before claims. If the verification didn't run in this turn, the claim can't be made.
+
+## The gate
+
+1. Name the command that would prove the claim.
+2. Run it fresh and completely — not a remembered earlier run, not a partial subset.
+3. Read the full output and the exit code.
+4. Only then state the result — with the evidence, or with the actual failing state.
+
+## What each claim requires
+
+| Claim | Proof required |
+|-------|----------------|
+| Tests pass | Fresh full test run with 0 failures — lint or build passing is not it |
+| Build succeeds | Build command exits 0 — lint passing is not it |
+| Bug fixed | The original symptom re-tested and gone |
+| Regression test works | Red-green verified once: revert fix → test fails; restore fix → test passes |
+| Subagent finished | Inspect the actual diff — never trust the agent's own "success" report |
+| Requirements met | Re-read the spec/plan and check items line by line — tests passing ≠ spec met |
+
+## Red flags
+
+"Should work now", "probably passes", expressing satisfaction before running anything, committing without a fresh run. If verification fails, report the real state with the output — never optimism.
