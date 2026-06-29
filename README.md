@@ -106,15 +106,25 @@ Copy any folder under `skills/` into:
 - `~/.claude/skills/` — personal, all projects (Claude Code)
 - `<project>/.claude/skills/` — per project
 
+## Skill awareness (the roster hook)
+
+A skill's `description` only helps if the model actually scans the skill list before it starts working — and in long or task-focused sessions, it often doesn't. So no-cape ships a `SessionStart` hook that injects a one-line roster at the top of each session: the skill names paired with *when each applies*. Nothing more.
+
+This is borrowed *mechanism*, not borrowed *coercion*. superpowers injects `<EXTREMELY_IMPORTANT>` text demanding you invoke a skill "if there is even a 1% chance it might apply — you do not have a choice." no-cape's injection says the opposite:
+
+> These are **NOT mandatory**. Load one when its situation actually arises. Use judgment; skip the ones that don't apply.
+
+The roster makes the skills *visible*; the model still decides. It points to the skill — it never repeats the skill's contents (that would just become a shortcut the model takes instead of reading the actual discipline). If you'd rather run without it, the hook degrades silently: delete `hooks/` or remove the `"hooks"` key from `plugin.json` and the skills still work, you just lose the session-open reminder.
+
 ## Design principles
 
 Contributions welcome if they follow the same rules:
 
-1. **Knowledge over coercion.** State the rule and the reason once. No Iron Laws, no rationalization tables, no ALL-CAPS threats. If a rule needs to be repeated five times to hold, the rule is the problem.
+1. **Knowledge over coercion.** State the rule and the reason once. No Iron Laws, no rationalization tables, no ALL-CAPS threats. If a rule needs to be repeated five times to hold, the rule is the problem. Making a skill *visible* (the roster hook) is fine; *forcing* its invocation is not.
 2. **Trigger-precise descriptions.** `description` says *when* to fire, never summarizes the workflow (a workflow summary becomes a shortcut the model takes instead of reading the skill).
 3. **Under 400 words per skill.** Skills load into context; every token competes with the actual task.
 4. **Decision rules and stop conditions, not process theater.** "3 failed fixes → stop" earns its place. "Announce that you are using this skill" does not.
-5. **Don't duplicate the harness.** Worktrees, parallel agents, plan execution, and review dispatch are native tooling in modern harnesses — skills shouldn't reimplement them.
+5. **Don't duplicate the harness.** Worktrees, parallel agents, plan execution, and review dispatch are native tooling in modern harnesses — skills shouldn't reimplement them. (Using a harness extension point, like the `SessionStart` hook above, is the opposite of reimplementing one.)
 
 ## Credits
 
@@ -127,6 +137,8 @@ Distilled from [obra/superpowers](https://github.com/obra/superpowers) (MIT) by 
 這 12 個 skill 不是一條要你逐步走完的流水線，而是在開發旅程的各個位置「待命」的紀律——大多數任務只會碰到其中幾個。上方 **The harness** 一節有一張流程圖，標出每個 skill 在專案生命週期的哪個階段幫到你：從零發想（`exploring-approaches`）→ 釐清需求 → 規劃 → 實作循環 → 除錯 → 驗證收尾。一行的 bug 修正可以直接跳到除錯迴圈；從頭打造的新服務則從最上面開始。
 
 安裝方式見上方 Install 一節，或直接把 `skills/` 底下的資料夾複製到 `~/.claude/skills/`。
+
+`description` 寫得再精準，也得模型真的去掃 skill 清單才有用——而在專注於任務的長對話裡，它常常不會。所以 no-cape 內建一個 `SessionStart` hook，在每個 session 開頭注入一份極簡清單：skill 名稱配上「何時適用」，僅此而已。這是借鏡 superpowers 的**機制**，不是借鏡它的**脅迫**：superpowers 注入「即使 1% 相關也 MUST invoke，你沒得選」；no-cape 的注入明說「這些**不是強制**，情境真的出現時再 load，用判斷力、不適用就跳過」。清單只負責讓 skill「被看見」，要不要用仍由模型決定，而且只指路、不複述 skill 內容。不想要的話，刪掉 `hooks/` 或拿掉 `plugin.json` 的 `"hooks"` 欄位即可，skill 照常運作，只是少了開場提醒。
 
 ## License
 

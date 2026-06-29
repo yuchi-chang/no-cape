@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# SessionStart hook for the no-cape plugin.
+#
+# Injects a neutral roster of the no-cape skills and WHEN each applies, so the
+# agent is aware they exist without having to scan the skill list first. This
+# is deliberately NOT a "you MUST invoke" directive — that would make no-cape
+# the very coercion framework it was built to replace. The list points; the
+# model judges; the skill itself holds the discipline.
+
+set -euo pipefail
+
+# The injected context. Tone is load-bearing: "NOT mandatory" / "use judgment"
+# keeps the decision with the model. Edit the roster here if skills change.
+read -r -d '' NOCAPE_CONTEXT <<'EOF' || true
+<no-cape>
+This session has the no-cape skills available - lean engineering-discipline skills. They are NOT mandatory; load one via the Skill tool when its situation actually arises. Each line is when it applies:
+
+- clarifying-requirements - starting underspecified new work
+- exploring-approaches - turning a vague idea into a project shape
+- writing-solid-plans - planning a multi-step feature or refactor
+- surgical-changes - editing existing code you didn't just write
+- fail-loud - writing error handling, fallbacks, or retries
+- safe-refactoring - restructuring working code
+- writing-meaningful-tests - writing or modifying tests
+- measure-before-optimizing - performance work
+- schema-migration-safety - changing a database schema
+- root-cause-debugging - a bug, test failure, or regression
+- verify-before-done - about to claim done/fixed/passing
+- receiving-feedback - acting on review comments or corrections
+
+Use judgment: skip the ones that don't apply. The skill holds the actual discipline; this list only points you to it.
+</no-cape>
+EOF
+
+# Escape for JSON embedding via bash parameter substitution (fast single passes).
+escape_for_json() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "$s"
+}
+
+escaped=$(escape_for_json "$NOCAPE_CONTEXT")
+
+# Emit only the field the current platform consumes.
+# Cursor: additional_context (snake_case, top-level).
+# Claude Code: hookSpecificOutput.additionalContext (nested).
+# Copilot CLI / SDK standard: additionalContext (top-level).
+# printf (not heredoc) avoids the bash 5.3+ heredoc hang.
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+  printf '{\n  "additional_context": "%s"\n}\n' "$escaped" | cat
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ]; then
+  printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$escaped" | cat
+else
+  printf '{\n  "additionalContext": "%s"\n}\n' "$escaped" | cat
+fi
+
+exit 0
