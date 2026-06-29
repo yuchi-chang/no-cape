@@ -116,6 +116,15 @@ This is borrowed *mechanism*, not borrowed *coercion*. superpowers injects `<EXT
 
 The roster makes the skills *visible*; the model still decides. It points to the skill — it never repeats the skill's contents (that would just become a shortcut the model takes instead of reading the actual discipline). If you'd rather run without it, the hook degrades silently: delete `hooks/` or remove the `"hooks"` key from `plugin.json` and the skills still work, you just lose the session-open reminder.
 
+### Manual override: `/no-cape`
+
+When a skill didn't auto-trigger but you want its discipline applied anyway, the `/no-cape` command is the escape hatch:
+
+- `/no-cape surgical-changes` — load that skill and apply it to the current work (prefixes work too: `/no-cape surgical`)
+- `/no-cape` — list the skills and pick one
+
+This keeps the discipline auto-triggering by default, and hands you a manual switch for the times it doesn't. Like the roster, the command only routes to the skill — it never restates the skill's contents.
+
 ## Design principles
 
 Contributions welcome if they follow the same rules:

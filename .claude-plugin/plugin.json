@@ -1,7 +1,7 @@
 {
   "name": "no-cape",
   "description": "Lean engineering-discipline skills for frontier-class models. The knowledge superpowers carried, without the coercion it needed.",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "author": {
     "name": "Yuchi Chang",
     "email": "yu.chi.chang.hp@gmail.com"
@@ -10,6 +10,7 @@
   "repository": "https://github.com/yuchi-chang/no-cape",
   "license": "MIT",
   "hooks": "./hooks/hooks.json",
+  "commands": "./commands/",
   "keywords": [
     "skills",
     "debugging",

@@ -1,0 +1,5 @@
+# Hook scripts run under bash on Unix/macOS. CRLF line endings break the
+# shebang (#!/usr/bin/env bash\r) and the script silently fails to execute.
+# Force LF regardless of the committer's platform.
+hooks/session-start text eol=lf
+hooks/run-hook.cmd  text eol=lf
