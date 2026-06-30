@@ -15,8 +15,8 @@ read -r -d '' NOCAPE_CONTEXT <<'EOF' || true
 <no-cape>
 This session has the no-cape skills available - lean engineering-discipline skills. They are NOT mandatory; load one via the Skill tool when its situation actually arises. Each line is when it applies:
 
-- clarifying-requirements - starting underspecified new work
-- exploring-approaches - turning a vague idea into a project shape
+- exploring-approaches - a vague new idea or goal arrives; settle the project's *shape* (runs first, before clarifying-requirements)
+- clarifying-requirements - the shape is chosen; pin down underspecified details within it
 - writing-solid-plans - planning a multi-step feature or refactor
 - surgical-changes - editing existing code you didn't just write
 - fail-loud - writing error handling, fallbacks, or retries
