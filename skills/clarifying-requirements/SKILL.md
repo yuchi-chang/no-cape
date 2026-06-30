@@ -5,6 +5,14 @@ description: Use when starting a new feature, component, or project whose requir
 
 # Clarifying Requirements
 
+## First: has the approach been chosen?
+
+Clarifying details inside an approach assumes the approach is settled. For a new project or a significant feature, confirm that first — [[exploring-approaches]] runs *before* this skill, precisely to stop you from refining a branch nobody checked was the right one.
+
+Before asking your first question, check: was the project's fundamental shape ever on the table, or did you walk straight into the user's (or your own) first idea? Signs it was skipped: the goal hides a fork into *different projects* (cloud API vs self-host vs SaaS; batch vs realtime), the user stated a preference you accepted without examining, or your questions all live inside one unexamined architecture. If so, stop and run [[exploring-approaches]] now — then come back here.
+
+Skip this check when the approach is genuinely not in question: a bug fix, a small change to existing code, or a task whose shape has only one reasonable form. The point is to catch the unexamined fork, not to ceremonially loop through a sibling skill before every clarification.
+
 Code built on guessed requirements is rework with extra steps. But interrogation is friction too: every question must earn its place.
 
 ## Question discipline
