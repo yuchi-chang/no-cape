@@ -6,6 +6,15 @@
 # is deliberately NOT a "you MUST invoke" directive — that would make no-cape
 # the very coercion framework it was built to replace. The list points; the
 # model judges; the skill itself holds the discipline.
+#
+# The one exception is the front-of-project checkpoint below. The two
+# front-of-project disciplines fire only ONCE per project — miss the moment and
+# it's gone, unlike the loop skills that recur. Pure opt-in loses exactly there:
+# the model slips past the decision without ever weighing it. So the checkpoint
+# forces the ACTION (pause and state your read), never the CONCLUSION (adopting
+# one or judging both unnecessary stay equally valid). It makes skipping a
+# visible, accountable choice instead of silent momentum — the minimum coercion
+# that fixes the miss, scoped to the two skills that can't recover from it.
 
 set -euo pipefail
 
@@ -29,6 +38,8 @@ This session has the no-cape skills available - lean engineering-discipline skil
 - receiving-feedback - acting on review comments or corrections
 
 Use judgment: skip the ones that don't apply. The skill holds the actual discipline; this list only points you to it.
+
+One required checkpoint (the rest of the roster stays judgment-only): before starting a new piece of work — and before writing any code for it — pause once and state your read on the two front-of-project disciplines: exploring-approaches (is the project's shape settled?) and clarifying-requirements (are the details specified enough to design?). Adopting one, or judging both unnecessary, are equally fine — but say which, out loud. This checkpoint is required only because these two fire once per project; miss the moment and it's gone.
 </no-cape>
 EOF
 

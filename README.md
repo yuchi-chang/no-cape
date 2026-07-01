@@ -116,6 +116,14 @@ This is borrowed *mechanism*, not borrowed *coercion*. superpowers injects `<EXT
 
 The roster makes the skills *visible*; the model still decides. It points to the skill — it never repeats the skill's contents (that would just become a shortcut the model takes instead of reading the actual discipline). If you'd rather run without it, the hook degrades silently: delete `hooks/` or remove the `"hooks"` key from `plugin.json` and the skills still work, you just lose the session-open reminder.
 
+### The one required checkpoint
+
+There is a single, deliberate exception to "the model still decides." The roster ends with a required front-of-project checkpoint: before starting a new piece of work, and before writing any code for it, the model must pause once and state its read on the two front-of-project disciplines — `exploring-approaches` and `clarifying-requirements`.
+
+This exists because those two fire *once per project*. The implementation-loop skills recur — miss `fail-loud` on one `try/catch` and the next one comes around. But the front-of-project decisions happen at a single moment; skip that moment and it's gone. Pure opt-in fails precisely there: the model slips past the decision on momentum, without ever weighing it. (That's not hypothetical — it's the exact miss that motivated this checkpoint.)
+
+The checkpoint stays true to the "knowledge over coercion" principle by forcing the **action, not the conclusion**. superpowers forced the conclusion — "1% chance it applies → you MUST invoke." This forces only that the model *pause and say its read out loud*; adopting a skill or judging both unnecessary are equally valid answers. It converts a silent skip into a visible, accountable one — the minimum coercion that closes the gap, scoped to the two skills that can't recover from being missed. Everything else in the roster stays judgment-only.
+
 ### Manual override: `/no-cape`
 
 When a skill didn't auto-trigger but you want its discipline applied anyway, the `/no-cape` command is the escape hatch:
@@ -129,7 +137,7 @@ This keeps the discipline auto-triggering by default, and hands you a manual swi
 
 Contributions welcome if they follow the same rules:
 
-1. **Knowledge over coercion.** State the rule and the reason once. No Iron Laws, no rationalization tables, no ALL-CAPS threats. If a rule needs to be repeated five times to hold, the rule is the problem. Making a skill *visible* (the roster hook) is fine; *forcing* its invocation is not.
+1. **Knowledge over coercion.** State the rule and the reason once. No Iron Laws, no rationalization tables, no ALL-CAPS threats. If a rule needs to be repeated five times to hold, the rule is the problem. Making a skill *visible* (the roster hook) is fine; *forcing a conclusion* ("you MUST invoke this") is not. Forcing an *action* the model then judges freely — pause and state your read, as the one required checkpoint does — is the narrow, accountable exception, and only where a decision fires once and can't be recovered.
 2. **Trigger-precise descriptions.** `description` says *when* to fire, never summarizes the workflow (a workflow summary becomes a shortcut the model takes instead of reading the skill).
 3. **Under 400 words per skill.** Skills load into context; every token competes with the actual task.
 4. **Decision rules and stop conditions, not process theater.** "3 failed fixes → stop" earns its place. "Announce that you are using this skill" does not.
