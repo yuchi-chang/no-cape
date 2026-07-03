@@ -203,6 +203,23 @@ Distilled from [obra/superpowers](https://github.com/obra/superpowers) (MIT) by 
 
 這 13 個 skill 不是一條要你逐步走完的流水線，而是在開發旅程的各個位置「待命」的紀律——大多數任務只會碰到其中幾個。上方 **The harness** 一節有一張流程圖，標出每個 skill 在專案生命週期的哪個階段幫到你：從零發想（`exploring-approaches`）→ 釐清需求 → 規劃 → 實作循環 → 除錯 → 驗證收尾。一行的 bug 修正可以直接跳到除錯迴圈；從頭打造的新服務則從最上面開始。
 
+### 各 skill 說明
+
+| Skill | 何時觸發 | 核心紀律 |
+|-------|---------|---------|
+| [`exploring-approaches`](skills/exploring-approaches/SKILL.md) | 從一個模糊想法開啟專案 | 目標指的是終點，不是路線。在細修任何一條路之前，先攤開幾種本質不同的專案形狀——*即使使用者已有偏好的做法*。用三條件的煞車，避免為了顯得周全而硬湊選項。 |
+| [`clarifying-requirements`](skills/clarifying-requirements/SKILL.md) | 需求不明確的新工作 | 只問「答案會改變設計」的問題——一次一題，優先給選擇題。先把綁在一起的範圍拆開。動手前先寫一段簡短設計。 |
+| [`writing-solid-plans`](skills/writing-solid-plans/SKILL.md) | 規劃多步驟的功能或重構 | 計畫是寫給零背景的讀者：精確路徑、真實程式碼、不留佔位字（「TBD」「加上適當的錯誤處理」）。交出去前自審涵蓋度與命名一致性。 |
+| [`surgical-changes`](skills/surgical-changes/SKILL.md) | 修改既有程式碼 | diff 就是成品：每一行都能追溯回需求。不順手清理——把可改進處回報出來，別直接動手。 |
+| [`fail-loud`](skills/fail-loud/SKILL.md) | 撰寫錯誤處理 | 被吞掉的錯誤是裝了延遲計時器的 bug。每個 fallback 都是產品決策：「這條分支執行時，系統真的還是對的嗎？」 |
+| [`safe-refactoring`](skills/safe-refactoring/SKILL.md) | 重構可運作的程式碼 | 絕不把重構和行為變更混在一起。改之前、改之間、改之後都要綠燈。改名前用 grep 掃過編譯器看不到的地方。 |
+| [`writing-meaningful-tests`](skills/writing-meaningful-tests/SKILL.md) | 撰寫或修改測試 | 測行為，不是測 mock。production 裡不放只給測試用的方法。等條件成立，別用 sleep。沒看過它失敗過的測試，什麼都證明不了。 |
+| [`measure-before-optimizing`](skills/measure-before-optimizing/SKILL.md) | 效能工作 | 沒有量測就不優化。先講清楚基準，修掉結構性成本，再用同一份工作負載重新量測。 |
+| [`schema-migration-safety`](skills/schema-migration-safety/SKILL.md) | 資料庫 schema 變更 | 每次部署，舊碼都會跑在新 schema 上。expand–contract、測過的 rollback、migration 裡不做資料 backfill。 |
+| [`verify-before-done`](skills/verify-before-done/SKILL.md) | 即將宣稱「完成」「修好」「通過」 | 這種宣稱要有「這一回合實際跑過」的指令佐證。lint ≠ build ≠ 測試。subagent 回報「成功」要看 diff 核對。測試過 ≠ 需求達成。 |
+| [`receiving-feedback`](skills/receiving-feedback/SKILL.md) | 收到 review 意見或修正建議 | 動手前先把意見對照程式碼查證。每個不清楚的點都先問清楚，再開始動任何一項。不做表面附和——diff 才是回應。 |
+| [`escalate-dont-thrash`](skills/escalate-dont-thrash/SKILL.md) | 對同一問題反覆嘗試卻拿不到新證據 | 當嘗試不再產生新資訊，就停止產生嘗試。讓現場不比原本更糟，寫一份交接摘要（已知事實、已排除的假設、失敗過的嘗試），並建議升級。有界的失敗勝過自信的鬼打牆。 |
+
 安裝方式見上方 Install 一節，或直接把 `skills/` 底下的資料夾複製到 `~/.claude/skills/`。
 
 `description` 寫得再精準，也得模型真的去掃 skill 清單才有用——而在專注於任務的長對話裡，它常常不會。所以 no-cape 內建一個 `SessionStart` hook，在每個 session 開頭注入一份極簡清單：skill 名稱配上「何時適用」，僅此而已。這是借鏡 superpowers 的**機制**，不是借鏡它的**脅迫**：superpowers 注入「即使 1% 相關也 MUST invoke，你沒得選」；no-cape 的注入明說「這些**不是強制**，情境真的出現時再 load，用判斷力、不適用就跳過」。清單只負責讓 skill「被看見」，要不要用仍由模型決定，而且只指路、不複述 skill 內容。不想要的話，刪掉 `hooks/` 或拿掉 `plugin.json` 的 `"hooks"` 欄位即可，skill 照常運作，只是少了開場提醒。
