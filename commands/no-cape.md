@@ -19,6 +19,7 @@ The available no-cape skills (name — when it applies):
 - `root-cause-debugging` — a bug, test failure, or regression
 - `verify-before-done` — about to claim done/fixed/passing
 - `receiving-feedback` — acting on review comments or corrections
+- `escalate-dont-thrash` — repeated attempts at the same problem failing without new evidence; stop and hand off
 
 The user's argument is: `$ARGUMENTS`
 

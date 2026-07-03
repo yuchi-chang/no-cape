@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# Stop hook for the no-cape plugin — cape mode only.
+#
+# The deterministic version of verify-before-done: when the agent tries to end
+# its turn, run the project's verify command; if it fails, block the stop and
+# hand the failure output back. The model can no longer say "done" past a red
+# build — the gate, not the model, holds the line.
+#
+# Opt-in per project: fires only when <cwd>/.no-cape.json defines "verify".
+# No config, no gate — silence is the default because a Stop hook that guesses
+# at test commands would be worse than none.
+#
+# Loop safety: stop_hook_active means a previous block in this same turn
+# already forced a continuation. We then allow ONE re-check; if the verify
+# still fails, we let the turn end — the model has already been told once and
+# either fixed it or must report the failing state. Endless blocking teaches
+# nothing and burns the session. (Claude Code hard-caps consecutive blocks
+# anyway; this exits gracefully before that.)
+#
+# Pure bash except the verify command itself (inherent, opt-in cost).
+
+set -euo pipefail
+
+. "${0%[/\\]*}/common.sh"
+
+INPUT=""
+read_stdin INPUT
+[ -n "$INPUT" ] || exit 0
+
+json_str_v SESSION_ID "$INPUT" "session_id"
+json_str_v CWD_RAW "$INPUT" "cwd"
+json_unescape_v CWD "$CWD_RAW"
+
+cached_mode_v MODE "$SESSION_ID" "$CWD"
+[ "$MODE" = "cape" ] || exit 0
+
+nocape_config_v CONFIG "$CWD"
+json_str_v VERIFY_RAW "$CONFIG" "verify"
+json_unescape_v VERIFY "$VERIFY_RAW"
+[ -n "$VERIFY" ] || exit 0
+
+SECOND_PASS=false
+if json_bool_true "$INPUT" "stop_hook_active"; then
+    SECOND_PASS=true
+fi
+
+# Run the verify command in the project directory. Keep it fast (lint, build,
+# quick tests) — hooks.json caps this hook's wall time.
+set +e
+OUTPUT=$(cd "$CWD" 2>/dev/null && bash -c "$VERIFY" 2>&1)
+STATUS=$?
+set -e
+
+if [ "$STATUS" -eq 0 ]; then
+    exit 0
+fi
+
+if [ "$SECOND_PASS" = true ]; then
+    # Already blocked once this turn. Let it end rather than loop.
+    exit 0
+fi
+
+# Last 30 lines of output, without spawning tail.
+mapfile -t LINES <<< "$OUTPUT"
+START=$(( ${#LINES[@]} > 30 ? ${#LINES[@]} - 30 : 0 ))
+TAIL=""
+for (( i = START; i < ${#LINES[@]}; i++ )); do
+    TAIL+="${LINES[$i]}"$'\n'
+done
+
+REASON="Cape mode verification gate: \`${VERIFY}\` exited ${STATUS}. Fix the failures before ending the turn, or — if they cannot be fixed now — end by reporting the failing state honestly (never claim done past a red verify). Output tail:
+${TAIL%$'\n'}"
+
+escape_for_json_v escaped "$REASON"
+printf '{\n  "decision": "block",\n  "reason": "%s"\n}\n' "$escaped"
+
+exit 0

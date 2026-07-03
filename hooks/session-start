@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # SessionStart hook for the no-cape plugin.
 #
+# LEAN MODE (frontier-class models — the original no-cape stance):
 # Injects a neutral roster of the no-cape skills and WHEN each applies, so the
 # agent is aware they exist without having to scan the skill list first. This
 # is deliberately NOT a "you MUST invoke" directive — that would make no-cape
@@ -15,15 +16,37 @@
 # one or judging both unnecessary stay equally valid). It makes skipping a
 # visible, accountable choice instead of silent momentum — the minimum coercion
 # that fixes the miss, scoped to the two skills that can't recover from it.
+#
+# CAPE MODE (everything below frontier class):
+# The same knowledge, delivered coercively. Weaker tiers fail differently: they
+# don't lack the discipline, they miss the MOMENT to load it, and they follow
+# short in-context rules far better than judgment calls. So cape mode injects a
+# directive roster plus the distilled kernel of every skill (a portable
+# mini-CLAUDE.md), and arms the companion hooks: keyword reminders at
+# UserPromptSubmit and a verification gate at Stop. Mode resolution and the
+# per-session cache live in common.sh; this hook is the only one that sees the
+# model id, so it resolves once and caches for the others.
 
 set -euo pipefail
 
-# The injected context. Tone is load-bearing: "NOT mandatory" / "use judgment"
-# keeps the decision with the model. Edit the roster here if skills change.
-read -r -d '' NOCAPE_CONTEXT <<'EOF' || true
-<no-cape>
-This session has the no-cape skills available - lean engineering-discipline skills. They are NOT mandatory; load one via the Skill tool when its situation actually arises. Each line is when it applies:
+# ${0%[/\\]*} = dirname without a spawn; handles both path separators because
+# run-hook.cmd hands us a Windows-style $0.
+. "${0%[/\\]*}/common.sh"
 
+# Hook input arrives on stdin as JSON (Claude Code). Other platforms may pipe
+# nothing — degrade to lean, which matches pre-2.0 behavior.
+INPUT=""
+read_stdin INPUT
+json_str_v SESSION_ID "$INPUT" "session_id"
+json_str_v MODEL "$INPUT" "model"
+json_str_v CWD_RAW "$INPUT" "cwd"
+json_unescape_v CWD "$CWD_RAW"
+
+resolve_mode_v MODE "$CWD" "$MODEL"
+cache_mode "$SESSION_ID" "$MODE" "$MODEL"
+
+# The shared roster: skill name → the situation that calls for it.
+read -r -d '' ROSTER <<'EOF' || true
 - exploring-approaches - a vague new idea or goal arrives; settle the project's *shape* (runs first, before clarifying-requirements)
 - clarifying-requirements - the shape is chosen; pin down underspecified details within it
 - writing-solid-plans - planning a multi-step feature or refactor
@@ -36,25 +59,52 @@ This session has the no-cape skills available - lean engineering-discipline skil
 - root-cause-debugging - a bug, test failure, or regression
 - verify-before-done - about to claim done/fixed/passing
 - receiving-feedback - acting on review comments or corrections
+- escalate-dont-thrash - repeated attempts at the same problem failing without new evidence; stop and hand off
+EOF
+
+if [ "$MODE" = "cape" ]; then
+    # Tone is load-bearing here too — in the opposite direction. Weak tiers
+    # under-trigger on "use judgment", so cape mode says "load it BEFORE the
+    # work" and carries each skill's kernel inline as always-on rules. The
+    # kernels mirror the README table; keep both in sync.
+    read -r -d '' NOCAPE_CONTEXT <<EOF || true
+<no-cape mode="cape">
+Cape mode is active: engineering discipline in this session is enforced, not optional. The full disciplines live in the no-cape skills (load via the Skill tool). When a situation below arises, load the matching skill BEFORE doing the work. Reminders injected during the session are directives, not suggestions.
+
+Situation → skill:
+${ROSTER}
+
+Kernels, always in effect (the skill holds the full discipline; these are the non-negotiable cores):
+1. No fix without a stated root cause backed by evidence. Reproduce the bug before fixing; one hypothesis at a time; never stack fixes.
+2. The diff is the product: every changed line traces back to the request. No drive-by cleanups — report them instead of applying them.
+3. Never mix restructuring with behavior change. Green before, between, after.
+4. A swallowed error is a bug with a delay timer. No silent fallbacks, no empty catch blocks.
+5. Test behavior, not mocks. A test you have never seen fail proves nothing.
+6. No optimization without a baseline measurement of the real workload.
+7. Schema changes: old code runs against the new schema during every deploy. Expand–contract, tested rollbacks.
+8. "Done", "fixed", "passing" require a fresh verification command run THIS turn — lint ≠ build ≠ tests. Report failures honestly, never optimism.
+9. Two failed attempts at the same problem without new evidence → stop. Write a handoff summary (verified facts, eliminated hypotheses, what each failed attempt changed) and recommend escalation to a stronger model or a human. Never a third variation.
+
+Required checkpoint: before starting a new piece of work — and before writing any code for it — state your read on exploring-approaches (is the project's shape settled?) and clarifying-requirements (are the details specified enough to design?). Adopting one, or judging both unnecessary, are equally valid — but say which, out loud.
+</no-cape>
+EOF
+else
+    # Lean mode. Tone is load-bearing: "NOT mandatory" / "use judgment" keeps
+    # the decision with the model.
+    read -r -d '' NOCAPE_CONTEXT <<EOF || true
+<no-cape>
+This session has the no-cape skills available - lean engineering-discipline skills. They are NOT mandatory; load one via the Skill tool when its situation actually arises. Each line is when it applies:
+
+${ROSTER}
 
 Use judgment: skip the ones that don't apply. The skill holds the actual discipline; this list only points you to it.
 
 One required checkpoint (the rest of the roster stays judgment-only): before starting a new piece of work — and before writing any code for it — pause once and state your read on the two front-of-project disciplines: exploring-approaches (is the project's shape settled?) and clarifying-requirements (are the details specified enough to design?). Adopting one, or judging both unnecessary, are equally fine — but say which, out loud. This checkpoint is required only because these two fire once per project; miss the moment and it's gone.
 </no-cape>
 EOF
+fi
 
-# Escape for JSON embedding via bash parameter substitution (fast single passes).
-escape_for_json() {
-    local s="$1"
-    s="${s//\\/\\\\}"
-    s="${s//\"/\\\"}"
-    s="${s//$'\n'/\\n}"
-    s="${s//$'\r'/\\r}"
-    s="${s//$'\t'/\\t}"
-    printf '%s' "$s"
-}
-
-escaped=$(escape_for_json "$NOCAPE_CONTEXT")
+escape_for_json_v escaped "$NOCAPE_CONTEXT"
 
 # Emit only the field the current platform consumes.
 # Cursor: additional_context (snake_case, top-level).

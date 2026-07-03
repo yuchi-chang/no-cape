@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# UserPromptSubmit hook for the no-cape plugin — cape mode only.
+#
+# Weak model tiers don't lack discipline knowledge; they miss the MOMENT to
+# load it. This hook makes the trigger deterministic: scan the incoming prompt
+# for situation keywords and inject a pointed reminder naming the matching
+# skill(s). The reminder points; the skill still holds the discipline.
+#
+# Design constraints:
+# - Lean mode: exit silently. Frontier models treat this as pure noise.
+# - This runs on EVERY prompt, and on Windows each external process spawn
+#   costs hundreds of milliseconds — so the whole script is pure bash
+#   builtins ([[ =~ ]], read, printf). Zero spawns. Keep it that way.
+# - A missed match costs nothing (the roster is still in context); a false
+#   positive costs one line, so patterns stay conservative and the reminder
+#   carries an "ignore if misfired" escape hatch.
+# - At most two reminders per prompt — past that it's noise, not guidance.
+
+set -euo pipefail
+
+. "${0%[/\\]*}/common.sh"
+
+INPUT=""
+read_stdin INPUT
+[ -n "$INPUT" ] || exit 0
+
+json_str_v SESSION_ID "$INPUT" "session_id"
+json_str_v CWD_RAW "$INPUT" "cwd"
+json_unescape_v CWD "$CWD_RAW"
+cached_mode_v MODE "$SESSION_ID" "$CWD"
+[ "$MODE" = "cape" ] || exit 0
+
+# Field name differs across Claude Code versions; try both.
+PROMPT=""
+json_str_v PROMPT "$INPUT" "prompt_text"
+[ -n "$PROMPT" ] || json_str_v PROMPT "$INPUT" "prompt"
+[ -n "$PROMPT" ] || exit 0
+
+# Lowercase once (builtin) so patterns stay lowercase-ASCII simple.
+PROMPT_LC="${PROMPT,,}"
+
+MATCHES=()
+match() { # match <ERE pattern, lowercase> <skill> <imperative>
+    [ "${#MATCHES[@]}" -lt 2 ] || return 0
+    local re="$1"
+    if [[ $PROMPT_LC =~ $re ]]; then
+        MATCHES+=("no-cape:$2 — $3")
+    fi
+}
+
+# Ordered by how costly a miss is. Patterns favor precision over recall: the
+# SessionStart kernels already cover the general case, so only fire on wording
+# that strongly signals the situation.
+match 'bug|error|exception|crash|broken|regression|not work|doesn.t work|fail(s|ing|ed|ure)|報錯|錯誤|壞掉|閃退|修不好|失敗' \
+    'root-cause-debugging' 'reproduce and state the root cause with evidence before proposing any fix'
+match 'refactor|restructur|rename|extract (class|method|function)|重構' \
+    'safe-refactoring' 'no behavior change mixed in; green before, between, after'
+match 'too slow|slow(ness)?|performance|optimi[sz]|latency|memory (usage|leak)|太慢|效能|優化' \
+    'measure-before-optimizing' 'measure the real workload first; no tuning without a baseline'
+match 'migration|db schema|database schema|alter table|遷移|資料庫欄位' \
+    'schema-migration-safety' 'old code runs against the new schema mid-deploy; expand–contract'
+match 'write (a )?tests?|add (a )?tests?|unit test|test coverage|寫測試|補測試' \
+    'writing-meaningful-tests' 'test behavior, not mocks; a test never seen failing proves nothing'
+match 'try.?catch|error handling|fallback|retry|graceful|例外處理|錯誤處理' \
+    'fail-loud' 'a swallowed error is a bug with a delay timer; no silent fallbacks'
+
+[ "${#MATCHES[@]}" -gt 0 ] || exit 0
+
+REMINDER="<no-cape-reminder>Cape mode, keyword-triggered (ignore only if clearly misfired): before starting, load and follow —"
+for m in "${MATCHES[@]}"; do
+    REMINDER+=$'\n'"- ${m}"
+done
+REMINDER+=$'\n'"</no-cape-reminder>"
+
+escape_for_json_v escaped "$REMINDER"
+printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "UserPromptSubmit",\n    "additionalContext": "%s"\n  }\n}\n' "$escaped"
+
+exit 0
