@@ -10,6 +10,7 @@ The available no-cape skills (name — when it applies):
 - `clarifying-requirements` — starting underspecified new work
 - `exploring-approaches` — turning a vague idea into a project shape
 - `writing-solid-plans` — planning a multi-step feature or refactor
+- `durable-plans` — a plan must outlive the session: multi-session work, resuming from an on-disk plan, or landing changes one describes
 - `surgical-changes` — editing existing code you didn't just write
 - `fail-loud` — writing error handling, fallbacks, or retries
 - `safe-refactoring` — restructuring working code

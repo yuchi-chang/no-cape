@@ -27,6 +27,10 @@ Write the plan for an engineer (or a fresh agent) with zero context for this cod
 - "Similar to Task N" (repeat the content — tasks may be read out of order)
 - References to functions or types that no task defines
 
+## If the plan outlives this session
+
+A plan executed across sessions, reviewed by others, or run alongside other in-flight changes must live on disk — [[durable-plans]] holds the file convention and lifecycle (persist, sync, retire).
+
 ## Self-review before handoff
 
 1. **Coverage:** every spec requirement maps to a task — list any gaps.

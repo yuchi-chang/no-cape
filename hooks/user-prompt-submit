@@ -63,6 +63,8 @@ match 'write (a )?tests?|add (a )?tests?|unit test|test coverage|寫測試|補�
     'writing-meaningful-tests' 'test behavior, not mocks; a test never seen failing proves nothing'
 match 'try.?catch|error handling|fallback|retry|graceful|例外處理|錯誤處理' \
     'fail-loud' 'a swallowed error is a bug with a delay timer; no silent fallbacks'
+match 'where (i|we) left off|pick up where|resume (the|this|our|work|yesterday)|接續上次|繼續上次|接著上次|上次做到' \
+    'durable-plans' 'read the on-disk plan first and verify it against the code — the code wins every conflict'
 
 [ "${#MATCHES[@]}" -gt 0 ] || exit 0
 

@@ -50,6 +50,7 @@ read -r -d '' ROSTER <<'EOF' || true
 - exploring-approaches - a vague new idea or goal arrives; settle the project's *shape* (runs first, before clarifying-requirements)
 - clarifying-requirements - the shape is chosen; pin down underspecified details within it
 - writing-solid-plans - planning a multi-step feature or refactor
+- durable-plans - a plan must outlive the session: multi-session work, resuming from an on-disk plan, or landing changes one describes
 - surgical-changes - editing existing code you didn't just write
 - fail-loud - writing error handling, fallbacks, or retries
 - safe-refactoring - restructuring working code
@@ -83,7 +84,8 @@ Kernels, always in effect (the skill holds the full discipline; these are the no
 6. No optimization without a baseline measurement of the real workload.
 7. Schema changes: old code runs against the new schema during every deploy. Expand–contract, tested rollbacks.
 8. "Done", "fixed", "passing" require a fresh verification command run THIS turn — lint ≠ build ≠ tests. Report failures honestly, never optimism.
-9. Two failed attempts at the same problem without new evidence → stop. Write a handoff summary (verified facts, eliminated hypotheses, what each failed attempt changed) and recommend escalation to a stronger model or a human. Never a third variation.
+9. A plan that must outlive the session lives on disk, one file per change. When resuming, read the plan then verify it against the code — the code wins. Update the plan in the same commit that deviates from it; retire it when the change lands.
+10. Two failed attempts at the same problem without new evidence → stop. Write a handoff summary (verified facts, eliminated hypotheses, what each failed attempt changed) and recommend escalation to a stronger model or a human. Never a third variation.
 
 Required checkpoint: before starting a new piece of work — and before writing any code for it — state your read on exploring-approaches (is the project's shape settled?) and clarifying-requirements (are the details specified enough to design?). Adopting one, or judging both unnecessary, are equally valid — but say which, out loud.
 </no-cape>
