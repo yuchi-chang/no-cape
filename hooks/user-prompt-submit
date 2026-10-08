@@ -55,6 +55,8 @@ match 'bug|error|exception|crash|broken|regression|not work|doesn.t work|fail(s|
     'root-cause-debugging' 'reproduce and state the root cause with evidence before proposing any fix'
 match 'refactor|restructur|rename|extract (class|method|function)|重構' \
     'safe-refactoring' 'no behavior change mixed in; green before, between, after'
+match 'only (allow|permit|accept|let)|whitelist|blacklist|allow.?list|deny.?list|放行|擋掉|白名單|黑名單' \
+    'blast-radius' 'enumerate every path that reaches the condition and who hits it today before changing it'
 match 'too slow|slow(ness)?|performance|optimi[sz]|latency|memory (usage|leak)|太慢|效能|優化' \
     'measure-before-optimizing' 'measure the real workload first; no tuning without a baseline'
 match 'migration|db schema|database schema|alter table|遷移|資料庫欄位' \

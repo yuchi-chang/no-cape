@@ -19,6 +19,7 @@ Heavyweight skill frameworks were written for an earlier generation of models �
 | [`surgical-changes`](skills/surgical-changes/SKILL.md) | Editing existing code | The diff is the product: every line traces back to the request. No drive-by cleanups — report improvements, don't apply them. |
 | [`fail-loud`](skills/fail-loud/SKILL.md) | Writing error handling | A swallowed error is a bug with a delay timer. Every fallback is a product decision: "is the system actually correct when this branch executes?" |
 | [`safe-refactoring`](skills/safe-refactoring/SKILL.md) | Restructuring working code | Never mix restructure with behavior change. Green before, between, after. Grep beyond the compiler before renaming. |
+| [`blast-radius`](skills/blast-radius/SKILL.md) | Changing a condition, guard, filter, or allow/deny rule existing code already reaches | Before changing who passes, find out who is passing today: enumerate every path that reaches the branch, check production evidence, and treat implicit pass-through as a dependency. |
 | [`writing-meaningful-tests`](skills/writing-meaningful-tests/SKILL.md) | Writing or modifying tests | Test behavior, not mocks. No test-only methods in production. Wait for conditions, never sleep. A test you've never seen fail proves nothing. |
 | [`measure-before-optimizing`](skills/measure-before-optimizing/SKILL.md) | Performance work | No optimization without a measurement. State the baseline, fix the structural cost, re-measure the same workload. |
 | [`schema-migration-safety`](skills/schema-migration-safety/SKILL.md) | Database schema changes | Old code runs against new schema during every deploy. Expand–contract, tested rollbacks, no data backfill inside migrations. |
@@ -51,6 +52,7 @@ flowchart TD
         Surgical[surgical-changes<br/><i>edit existing code</i>]
         FailLoud[fail-loud<br/><i>handle errors honestly</i>]
         Refactor[safe-refactoring<br/><i>restructure without breaking</i>]
+        Blast[blast-radius<br/><i>who reaches this condition?</i>]
         Tests[writing-meaningful-tests<br/><i>tests that can fail</i>]
         Schema[schema-migration-safety<br/><i>change the DB safely</i>]
     end
@@ -74,7 +76,7 @@ flowchart TD
     classDef impl fill:#e6f4ea,stroke:#34a853,color:#1a1a1a;
     classDef check fill:#fef7e0,stroke:#fbbc04,color:#1a1a1a;
     class Explore,Clarify,Plan,Durable front;
-    class Surgical,FailLoud,Refactor,Tests,Schema impl;
+    class Surgical,FailLoud,Refactor,Blast,Tests,Schema impl;
     class RCD,Esc,Measure,Verify,Feedback check;
 ```
 
@@ -90,6 +92,7 @@ flowchart TD
 - **`surgical-changes`** keeps your diff honest in code you didn't just write — every line traces to the request, no drive-by cleanups.
 - **`fail-loud`** helps the moment you write a `try/catch` or a fallback, so a swallowed error doesn't become a silent bug with a delay timer.
 - **`safe-refactoring`** protects you when you restructure working code — never mixing a rename with a behavior change, staying green throughout.
+- **`blast-radius`** fires before you tighten or loosen a condition that live code already reaches — an allow/deny rule, a guard, a default. It makes you list every path that will now take a different branch, and check who actually hits it in production, before the edit — because the path that relied on falling through "by accident" is the one the literal request will break.
 - **`writing-meaningful-tests`** helps you write tests that actually prove something — testing behavior, not mocks, and never a test you haven't seen fail.
 - **`schema-migration-safety`** is your guardrail on database changes, where old code runs against the new schema mid-deploy and a bad migration loses real data.
 
@@ -147,7 +150,7 @@ This keeps the discipline auto-triggering by default, and hands you a manual swi
 
 > Edna said "no capes" to *supers*. If you're not super yet, you get a cape.
 
-The original no-cape thesis was never "models don't need coercion" — it was "**frontier** models don't." Weaker tiers (Sonnet, Haiku, older Opus) fail differently: they don't lack the discipline knowledge, they miss the *moment* to load it, and they follow short in-context rules far more reliably than judgment calls. Cape mode is the same 14 skills delivered coercively, for exactly those tiers. One knowledge base, two delivery modes.
+The original no-cape thesis was never "models don't need coercion" — it was "**frontier** models don't." Weaker tiers (Sonnet, Haiku, older Opus) fail differently: they don't lack the discipline knowledge, they miss the *moment* to load it, and they follow short in-context rules far more reliably than judgment calls. Cape mode is the same 15 skills delivered coercively, for exactly those tiers. One knowledge base, two delivery modes.
 
 ### What it changes
 
@@ -209,7 +212,7 @@ The `durable-plans` lifecycle distills the spec-driven change workflow of [Fissi
 
 這是一套給新世代強模型用的精簡工程紀律 skill。舊框架（如 superpowers）為了讓較弱的模型守紀律，加了大量強制性提示詞；強模型不需要被脅迫，但框架裡的真知識——決策規則、停止條件、證據要求——依然有價值。no-cape 留下知識，拿掉披風。
 
-這 14 個 skill 不是一條要你逐步走完的流水線，而是在開發旅程的各個位置「待命」的紀律——大多數任務只會碰到其中幾個。上方 **The harness** 一節有一張流程圖，標出每個 skill 在專案生命週期的哪個階段幫到你：從零發想（`exploring-approaches`）→ 釐清需求 → 規劃 → 實作循環 → 除錯 → 驗證收尾。一行的 bug 修正可以直接跳到除錯迴圈；從頭打造的新服務則從最上面開始。
+這 15 個 skill 不是一條要你逐步走完的流水線，而是在開發旅程的各個位置「待命」的紀律——大多數任務只會碰到其中幾個。上方 **The harness** 一節有一張流程圖，標出每個 skill 在專案生命週期的哪個階段幫到你：從零發想（`exploring-approaches`）→ 釐清需求 → 規劃 → 實作循環 → 除錯 → 驗證收尾。一行的 bug 修正可以直接跳到除錯迴圈；從頭打造的新服務則從最上面開始。
 
 ### 各 skill 說明
 
@@ -222,6 +225,7 @@ The `durable-plans` lifecycle distills the spec-driven change workflow of [Fissi
 | [`surgical-changes`](skills/surgical-changes/SKILL.md) | 修改既有程式碼 | diff 就是成品：每一行都能追溯回需求。不順手清理——把可改進處回報出來，別直接動手。 |
 | [`fail-loud`](skills/fail-loud/SKILL.md) | 撰寫錯誤處理 | 被吞掉的錯誤是裝了延遲計時器的 bug。每個 fallback 都是產品決策：「這條分支執行時，系統真的還是對的嗎？」 |
 | [`safe-refactoring`](skills/safe-refactoring/SKILL.md) | 重構可運作的程式碼 | 絕不把重構和行為變更混在一起。改之前、改之間、改之後都要綠燈。改名前用 grep 掃過編譯器看不到的地方。 |
+| [`blast-radius`](skills/blast-radius/SKILL.md) | 修改既有程式碼會走到的條件、守門邏輯、過濾或放行/阻擋規則 | 改「誰能通過」之前，先查清楚「現在是誰在通過」：列出所有會走到這個分支的路徑、查線上證據、把「剛好落入」的隱性依賴當成正式依賴。 |
 | [`writing-meaningful-tests`](skills/writing-meaningful-tests/SKILL.md) | 撰寫或修改測試 | 測行為，不是測 mock。production 裡不放只給測試用的方法。等條件成立，別用 sleep。沒看過它失敗過的測試，什麼都證明不了。 |
 | [`measure-before-optimizing`](skills/measure-before-optimizing/SKILL.md) | 效能工作 | 沒有量測就不優化。先講清楚基準，修掉結構性成本，再用同一份工作負載重新量測。 |
 | [`schema-migration-safety`](skills/schema-migration-safety/SKILL.md) | 資料庫 schema 變更 | 每次部署，舊碼都會跑在新 schema 上。expand–contract、測過的 rollback、migration 裡不做資料 backfill。 |
@@ -236,7 +240,7 @@ The `durable-plans` lifecycle distills the spec-driven change workflow of [Fissi
 
 ### Cape mode（披風模式）
 
-Edna 的「no capes!」是對超級英雄說的——還不是超級英雄的模型，就給它披風。no-cape 的命題從來不是「模型不需要脅迫」，而是「**前沿模型**不需要」。較弱的模型階層（Sonnet、Haiku、舊版 Opus）敗的方式不一樣：它們不缺紀律知識，缺的是「載入紀律的時機」，而且遵循短規則的能力遠勝於做判斷。Cape mode 就是同一套 14 個 skill 的強制投放版：
+Edna 的「no capes!」是對超級英雄說的——還不是超級英雄的模型，就給它披風。no-cape 的命題從來不是「模型不需要脅迫」，而是「**前沿模型**不需要」。較弱的模型階層（Sonnet、Haiku、舊版 Opus）敗的方式不一樣：它們不缺紀律知識，缺的是「載入紀律的時機」，而且遵循短規則的能力遠勝於做判斷。Cape mode 就是同一套 15 個 skill 的強制投放版：
 
 1. **指令式開場注入（SessionStart）**——把每個 skill 的核心紀律（kernel）濃縮成一行常駐規則一併注入，等於一份可攜帶的迷你 CLAUDE.md。就算模型從頭到尾沒載入任何 skill，底線規則已經在 context 裡。
 2. **確定性觸發（UserPromptSubmit）**——掃描 prompt 中的情境關鍵字（中英文都支援），命中就注入「先載入某某 skill」的提醒。把「何時該用」從模型的判斷變成 harness 的判斷。

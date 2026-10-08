@@ -54,6 +54,7 @@ read -r -d '' ROSTER <<'EOF' || true
 - surgical-changes - editing existing code you didn't just write
 - fail-loud - writing error handling, fallbacks, or retries
 - safe-refactoring - restructuring working code
+- blast-radius - changing a condition, guard, filter, or allow/deny rule that existing code already reaches
 - writing-meaningful-tests - writing or modifying tests
 - measure-before-optimizing - performance work
 - schema-migration-safety - changing a database schema
@@ -86,6 +87,7 @@ Kernels, always in effect (the skill holds the full discipline; these are the no
 8. "Done", "fixed", "passing" require a fresh verification command run THIS turn — lint ≠ build ≠ tests. Report failures honestly, never optimism.
 9. A plan that must outlive the session lives on disk, one file per change. When resuming, read the plan then verify it against the code — the code wins. Update the plan in the same commit that deviates from it; retire it when the change lands.
 10. Two failed attempts at the same problem without new evidence → stop. Write a handoff summary (verified facts, eliminated hypotheses, what each failed attempt changed) and recommend escalation to a stronger model or a human. Never a third variation.
+11. Before changing who passes a condition, enumerate every path that reaches it and check who hits it in production. Implicit pass-through is a dependency — make it explicit, don't break it.
 
 Required checkpoint: before starting a new piece of work — and before writing any code for it — state your read on exploring-approaches (is the project's shape settled?) and clarifying-requirements (are the details specified enough to design?). Adopting one, or judging both unnecessary, are equally valid — but say which, out loud.
 </no-cape>

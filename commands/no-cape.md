@@ -14,6 +14,7 @@ The available no-cape skills (name — when it applies):
 - `surgical-changes` — editing existing code you didn't just write
 - `fail-loud` — writing error handling, fallbacks, or retries
 - `safe-refactoring` — restructuring working code
+- `blast-radius` — changing a condition, guard, filter, or allow/deny rule that existing code already reaches
 - `writing-meaningful-tests` — writing or modifying tests
 - `measure-before-optimizing` — performance work
 - `schema-migration-safety` — changing a database schema
