@@ -14,6 +14,13 @@ No fix until you can state the root cause and point to the evidence for it. Fixi
 3. Check what changed: recent commits, dependency updates, config, environment.
 4. Trace bad values upstream to where they originate. Fix at the source, not where it crashed.
 
+## What counts as evidence
+
+- Rank your sources. Reproduction and observed behavior outrank docs and type definitions; those outrank comments, commit messages, and what someone told you; those outrank memory. Only the first two tiers are evidence. The rest are claims — a conclusion that rests on one says so, out loud, instead of stating the claim as fact.
+- A load-bearing premise about how a library or platform behaves at runtime gets verified before anything is built on it: the docs, the types in `node_modules`, or a one-minute experiment. A comment records what someone believed when they wrote it; the code next to it may already contradict it, and that contradiction is the finding.
+- Evidence comes from *this* incident. A similar failure's recording, measurements, or root cause explain that failure, not this one — borrowing them is guessing with extra confidence.
+- A hypothesis the user offers is a test case, not an objection to rebut. Trace it through the code to the exact point where it holds or breaks before answering.
+
 ## Multi-component systems (API → service → DB, CI → build → deploy)
 
 Don't guess which layer is broken. Add logging at each component boundary (what enters, what exits, whether env/config propagates), run once, and read the evidence to locate the failing layer. Then investigate only that layer.

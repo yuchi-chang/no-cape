@@ -1,13 +1,33 @@
 #!/usr/bin/env bash
-# UserPromptSubmit hook for the no-cape plugin — cape mode only.
+# UserPromptSubmit hook for the no-cape plugin — both modes, two tones.
 #
-# Weak model tiers don't lack discipline knowledge; they miss the MOMENT to
-# load it. This hook makes the trigger deterministic: scan the incoming prompt
-# for situation keywords and inject a pointed reminder naming the matching
-# skill(s). The reminder points; the skill still holds the discipline.
+# Models don't lack discipline knowledge; they miss the MOMENT to load it.
+# The SessionStart roster makes skills visible at the top of the session, but
+# the situation arrives forty turns later, mid-flow, when the model is least
+# inclined to stop and reach for a checklist — frontier tiers included (a
+# Fable session diagnosed a bug for three turns on an unverified premise
+# without once loading root-cause-debugging, although the opening prompt
+# matched the pattern below). This hook makes the trigger deterministic: scan
+# the incoming prompt for situation keywords and name the matching skill(s).
+#
+# Lean mode emits a POINTER: it says the situation looks like one a skill
+# covers and leaves the decision with the model — visibility, not coercion,
+# same stance as the roster. Cape mode emits a DIRECTIVE. Either way the
+# skill holds the discipline; this hook only points at it.
+#
+# Three pointers carry a CHECKPOINT (root-cause-debugging, receiving-feedback,
+# blast-radius): the model must say its read before acting — e.g. before
+# stating a cause, whether it loaded the skill and what tier its evidence sits
+# in. That forces the ACTION (say your read), never the CONCLUSION (loading or
+# skipping both stay valid) — the same shape as the front-of-project checkpoint
+# in session-start, and for the same reason: a silent skip there is
+# unrecoverable. A stated cause leaves the session and gets carried forward as
+# fact; a wrong rebuttal defends the error for another round; a blast-radius
+# miss surfaces in production weeks later for someone else. Recurring
+# disciplines (fail-loud, surgical-changes, tests) never get a checkpoint —
+# the next diff catches those.
 #
 # Design constraints:
-# - Lean mode: exit silently. Frontier models treat this as pure noise.
 # - This runs on EVERY prompt, and on Windows each external process spawn
 #   costs hundreds of milliseconds — so the whole script is pure bash
 #   builtins ([[ =~ ]], read, printf). Zero spawns. Keep it that way.
@@ -28,7 +48,6 @@ json_str_v SESSION_ID "$INPUT" "session_id"
 json_str_v CWD_RAW "$INPUT" "cwd"
 json_unescape_v CWD "$CWD_RAW"
 cached_mode_v MODE "$SESSION_ID" "$CWD"
-[ "$MODE" = "cape" ] || exit 0
 
 # Field name differs across Claude Code versions; try both.
 PROMPT=""
@@ -40,23 +59,30 @@ json_str_v PROMPT "$INPUT" "prompt_text"
 PROMPT_LC="${PROMPT,,}"
 
 MATCHES=()
-match() { # match <ERE pattern, lowercase> <skill> <imperative>
+CHECKPOINTS=()
+match() { # match <ERE pattern, lowercase> <skill> <imperative> [checkpoint]
     [ "${#MATCHES[@]}" -lt 2 ] || return 0
     local re="$1"
     if [[ $PROMPT_LC =~ $re ]]; then
         MATCHES+=("no-cape:$2 — $3")
+        [ -z "${4:-}" ] || CHECKPOINTS+=("$2: $4")
     fi
 }
 
 # Ordered by how costly a miss is. Patterns favor precision over recall: the
 # SessionStart kernels already cover the general case, so only fire on wording
 # that strongly signals the situation.
-match 'bug|error|exception|crash|broken|regression|not work|doesn.t work|fail(s|ing|ed|ure)|報錯|錯誤|壞掉|閃退|修不好|失敗' \
-    'root-cause-debugging' 'reproduce and state the root cause with evidence before proposing any fix'
+match 'bug|error|exception|crash|broken|regression|not work|doesn.t work|fail(s|ing|ed|ure)|報錯|錯誤|壞掉|閃退|修不好|失敗|異常|出不來' \
+    'root-cause-debugging' 'reproduce and state the root cause with evidence before proposing any fix' \
+    'before you state a cause or propose a fix, say whether you loaded root-cause-debugging ("loaded" or "skipped because ..." both count; a silent skip does not) and which tier your evidence sits in: reproduced here / docs or types / a comment or someone'"'"'s account.'
+match 'reviewer|review (comment|feedback)|review 意見|對方(說|覺得|認為|回覆)|第三方|你確定|我覺得不對|你錯了|被打槍' \
+    'receiving-feedback' 'evaluate the correction on evidence before accepting or rebutting it' \
+    'before accepting or rebutting the correction, say which it is — holds / breaks / cannot tell yet — and name the evidence that decides it, not who said it.'
 match 'refactor|restructur|rename|extract (class|method|function)|重構' \
     'safe-refactoring' 'no behavior change mixed in; green before, between, after'
 match 'only (allow|permit|accept|let)|whitelist|blacklist|allow.?list|deny.?list|放行|擋掉|白名單|黑名單' \
-    'blast-radius' 'enumerate every path that reaches the condition and who hits it today before changing it'
+    'blast-radius' 'enumerate every path that reaches the condition and who hits it today before changing it' \
+    'before editing the condition, name who reaches it today, grouped by source; "probably nobody" means you are not ready to change it.'
 match 'too slow|slow(ness)?|performance|optimi[sz]|latency|memory (usage|leak)|太慢|效能|優化' \
     'measure-before-optimizing' 'measure the real workload first; no tuning without a baseline'
 match 'migration|db schema|database schema|alter table|遷移|資料庫欄位' \
@@ -70,11 +96,25 @@ match 'where (i|we) left off|pick up where|resume (the|this|our|work|yesterday)|
 
 [ "${#MATCHES[@]}" -gt 0 ] || exit 0
 
-REMINDER="<no-cape-reminder>Cape mode, keyword-triggered (ignore only if clearly misfired): before starting, load and follow —"
-for m in "${MATCHES[@]}"; do
-    REMINDER+=$'\n'"- ${m}"
-done
-REMINDER+=$'\n'"</no-cape-reminder>"
+if [ "$MODE" = "cape" ]; then
+    REMINDER="<no-cape-reminder>Cape mode, keyword-triggered (ignore only if clearly misfired): before starting, load and follow —"
+    for m in "${MATCHES[@]}"; do
+        REMINDER+=$'\n'"- ${m}"
+    done
+    REMINDER+=$'\n'"</no-cape-reminder>"
+else
+    REMINDER="<no-cape-pointer>This prompt reads like a situation a no-cape skill covers. Your call, as always — but decide it now rather than after the conclusion is formed (ignore if misfired):"
+    for m in "${MATCHES[@]}"; do
+        REMINDER+=$'\n'"- ${m}"
+    done
+    if [ "${#CHECKPOINTS[@]}" -gt 0 ]; then
+        REMINDER+=$'\n'"Checkpoint (required — say your read out loud; either answer is fine):"
+        for c in "${CHECKPOINTS[@]}"; do
+            REMINDER+=$'\n'"- ${c}"
+        done
+    fi
+    REMINDER+=$'\n'"</no-cape-pointer>"
+fi
 
 escape_for_json_v escaped "$REMINDER"
 printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "UserPromptSubmit",\n    "additionalContext": "%s"\n  }\n}\n' "$escaped"

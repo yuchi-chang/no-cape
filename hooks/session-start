@@ -8,22 +8,34 @@
 # the very coercion framework it was built to replace. The list points; the
 # model judges; the skill itself holds the discipline.
 #
-# The one exception is the front-of-project checkpoint below. The two
-# front-of-project disciplines fire only ONCE per project — miss the moment and
-# it's gone, unlike the loop skills that recur. Pure opt-in loses exactly there:
-# the model slips past the decision without ever weighing it. So the checkpoint
-# forces the ACTION (pause and state your read), never the CONCLUSION (adopting
-# one or judging both unnecessary stay equally valid). It makes skipping a
-# visible, accountable choice instead of silent momentum — the minimum coercion
-# that fixes the miss, scoped to the two skills that can't recover from it.
+# The exceptions are the checkpoints below. The two front-of-project
+# disciplines fire only ONCE per project — miss the moment and it's gone,
+# unlike the loop skills that recur. Pure opt-in loses exactly there: the model
+# slips past the decision without ever weighing it. Three more ride on pointers
+# from user-prompt-submit (root-cause-debugging, receiving-feedback,
+# blast-radius): a cause stated without evidence leaves the session and is
+# carried forward as fact; a wrong rebuttal defends the error for another
+# round; a blast-radius miss surfaces in production for someone else. Every
+# checkpoint forces the ACTION (pause and state your read), never the
+# CONCLUSION (adopting or skipping stay equally valid). They make skipping a
+# visible, accountable choice instead of silent momentum — the minimum
+# coercion that fixes the miss, scoped to the skills that can't recover from
+# it. Recurring disciplines never qualify: the next diff catches those.
+#
+# Lean mode also carries TWO kernels inline (root-cause-debugging's evidence
+# rule, verify-before-done's fresh-run rule). That is knowledge, not coercion:
+# the same floor cape mode gives every skill, applied in lean to the two
+# disciplines whose miss leaves the session as a stated fact.
+# verify-before-done gets a kernel rather than a checkpoint because its moment
+# is the end of the model's own turn, which no prompt scanner can see.
 #
 # CAPE MODE (everything below frontier class):
 # The same knowledge, delivered coercively. Weaker tiers fail differently: they
 # don't lack the discipline, they miss the MOMENT to load it, and they follow
 # short in-context rules far better than judgment calls. So cape mode injects a
 # directive roster plus the distilled kernel of every skill (a portable
-# mini-CLAUDE.md), and arms the companion hooks: keyword reminders at
-# UserPromptSubmit and a verification gate at Stop. Mode resolution and the
+# mini-CLAUDE.md), turns the UserPromptSubmit keyword pointers into directives,
+# and arms the verification gate at Stop. Mode resolution and the
 # per-session cache live in common.sh; this hook is the only one that sees the
 # model id, so it resolves once and caches for the others.
 
@@ -77,7 +89,7 @@ Situation → skill:
 ${ROSTER}
 
 Kernels, always in effect (the skill holds the full discipline; these are the non-negotiable cores):
-1. No fix without a stated root cause backed by evidence. Reproduce the bug before fixing; one hypothesis at a time; never stack fixes.
+1. No fix without a stated root cause backed by evidence from this incident. Reproduce the bug before fixing; one hypothesis at a time; never stack fixes. Comments, commit messages, and memory are claims, not evidence — verify a load-bearing premise against docs, types, or a quick experiment before building on it.
 2. The diff is the product: every changed line traces back to the request. No drive-by cleanups — report them instead of applying them.
 3. Never mix restructuring with behavior change. Green before, between, after.
 4. A swallowed error is a bug with a delay timer. No silent fallbacks, no empty catch blocks.
@@ -101,9 +113,17 @@ This session has the no-cape skills available - lean engineering-discipline skil
 
 ${ROSTER}
 
-Use judgment: skip the ones that don't apply. The skill holds the actual discipline; this list only points you to it.
+Use judgment: skip the ones that don't apply. The skill holds the actual discipline; this list only points you to it. When a later prompt's wording matches one of these situations, a one-line <no-cape-pointer> names the skill at that moment — it is a pointer, not a directive; it exists because the moment to load a discipline is easy to miss mid-flow, and the decision is still yours.
 
-One required checkpoint (the rest of the roster stays judgment-only): before starting a new piece of work — and before writing any code for it — pause once and state your read on the two front-of-project disciplines: exploring-approaches (is the project's shape settled?) and clarifying-requirements (are the details specified enough to design?). Adopting one, or judging both unnecessary, are equally fine — but say which, out loud. This checkpoint is required only because these two fire once per project; miss the moment and it's gone.
+Two kernels stay in effect whether or not you ever load the skill:
+- root-cause-debugging: no stated cause and no fix without evidence from this incident. Comments, commit messages, and memory are claims, not evidence — a conclusion that rests on one says so, and a load-bearing premise about how a library behaves at runtime gets checked against docs, types, or a one-minute experiment before anything is built on it.
+- verify-before-done: "done", "fixed", "passing" require a verification command run fresh in this turn with its output read; a failing state is reported as it is, never as optimism.
+
+Required checkpoints (the rest of the roster stays judgment-only). Each forces an action, never a conclusion: you say your read out loud, and either answer is fine.
+1. Front of project: before starting a new piece of work — and before writing any code for it — pause once and state your read on exploring-approaches (is the project's shape settled?) and clarifying-requirements (are the details specified enough to design?). Adopting one, or judging both unnecessary, are equally fine — but say which. Required because these two fire once per project; miss the moment and it's gone.
+2. Root cause (rides on the root-cause-debugging pointer): before you state a cause or propose a fix, say whether you loaded the skill ("loaded" or "skipped because ...") and which tier your evidence sits in: reproduced here / docs or types / a comment or someone's account. Required because a stated cause leaves the session and is carried forward as fact by everyone who hears it; the failure is the silent skip, not the skipped load.
+3. Correction received (rides on the receiving-feedback pointer): before accepting or rebutting a correction — from the user, a reviewer, or a third party — say which it is: holds / breaks / cannot tell yet, and name the evidence that decides it, not who said it. Required because a wrong rebuttal defends the error for another round and a reflexive acceptance imports one; both are paid for in round trips.
+4. Blast radius (rides on the blast-radius pointer): before editing a condition, guard, filter, or allow/deny rule, name who reaches it today, grouped by source; "probably nobody" means you are not ready. Required because the miss surfaces in production, weeks later, for someone else.
 </no-cape>
 EOF
 fi

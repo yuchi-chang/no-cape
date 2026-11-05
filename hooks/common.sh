@@ -2,8 +2,9 @@
 #
 # Two delivery modes, one knowledge base:
 #   lean — the original no-cape stance: knowledge, visibility, model judgment.
+#          Roster at SessionStart, keyword POINTERS at UserPromptSubmit.
 #   cape — enforcement for model tiers that still need it: directive roster with
-#          kernels at SessionStart, keyword reminders at UserPromptSubmit, and a
+#          kernels at SessionStart, keyword DIRECTIVES at UserPromptSubmit, and a
 #          verification gate at Stop.
 #
 # Mode resolution (first hit wins):
