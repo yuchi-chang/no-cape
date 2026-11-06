@@ -63,6 +63,7 @@ read -r -d '' ROSTER <<'EOF' || true
 - clarifying-requirements - the shape is chosen; pin down underspecified details within it
 - writing-solid-plans - planning a multi-step feature or refactor
 - durable-plans - a plan must outlive the session: multi-session work, resuming from an on-disk plan, or landing changes one describes
+- durable-knowledge - a fact about the project learned the hard way this session (a convention, invariant, quirk, or wrong premise that cost a round trip); write it where the next session reads first
 - surgical-changes - editing existing code you didn't just write
 - fail-loud - writing error handling, fallbacks, or retries
 - safe-refactoring - restructuring working code
@@ -100,6 +101,7 @@ Kernels, always in effect (the skill holds the full discipline; these are the no
 9. A plan that must outlive the session lives on disk, one file per change. When resuming, read the plan then verify it against the code — the code wins. Update the plan in the same commit that deviates from it; retire it when the change lands.
 10. Two failed attempts at the same problem without new evidence → stop. Write a handoff summary (verified facts, eliminated hypotheses, what each failed attempt changed) and recommend escalation to a stronger model or a human. Never a third variation.
 11. Before changing who passes a condition, enumerate every path that reaches it and check who hits it in production. Implicit pass-through is a dependency — make it explicit, don't break it.
+12. A fact learned the hard way this session — a convention, invariant, or wrong premise that cost a round trip — is written to the project's instructions file in the same commit as the fix, with the trap and how to re-verify it.
 
 Required checkpoint: before starting a new piece of work — and before writing any code for it — state your read on exploring-approaches (is the project's shape settled?) and clarifying-requirements (are the details specified enough to design?). Adopting one, or judging both unnecessary, are equally valid — but say which, out loud.
 </no-cape>

@@ -36,7 +36,7 @@ One file per change, `docs/plans/<change-name>.md` (follow the project's existin
 
 A landed change's plan is a liability pretending to be documentation:
 
-- Fold decisions worth keeping (architecture choices, rejected alternatives) into the project's permanent docs.
+- Fold decisions worth keeping (architecture choices, rejected alternatives) into the project's permanent docs — [[durable-knowledge]] says which ones qualify, where they go, and in what form.
 - Then delete the file — or move it to `docs/plans/archive/` if the project keeps history. Git preserves it either way.
 
 Don't maintain a parallel spec of the whole system: it duplicates what code, tests, and docs already say, and it rots. Plan files describe changes in flight; they retire when the change lands.

@@ -38,4 +38,4 @@ Don't guess which layer is broken. Add logging at each component boundary (what 
 
 ## Landing the fix
 
-Write a test that reproduces the bug: it must fail before your fix and pass after. If investigation shows the cause is genuinely environmental or timing-dependent, document what you ruled out and add handling (retry/timeout) plus logging — but most "no root cause found" is just incomplete investigation.
+Write a test that reproduces the bug: it must fail before your fix and pass after. If investigation shows the cause is genuinely environmental or timing-dependent, document what you ruled out and add handling (retry/timeout) plus logging — but most "no root cause found" is just incomplete investigation. If the cause was a hidden convention or a premise the code misled you into, record it where the next session reads first ([[durable-knowledge]]) in the same commit as the fix.

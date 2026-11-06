@@ -16,6 +16,7 @@ Heavyweight skill frameworks were written for an earlier generation of models �
 | [`clarifying-requirements`](skills/clarifying-requirements/SKILL.md) | Underspecified new work | Ask only questions whose answers change the design — one at a time, multiple choice preferred. Decompose bundled scope first. Short design before code. |
 | [`writing-solid-plans`](skills/writing-solid-plans/SKILL.md) | Planning a multi-step feature or refactor | Plans are for readers with zero context: exact paths, real code, no placeholders ("TBD", "add appropriate error handling"). Self-review coverage and naming consistency before handoff. |
 | [`durable-plans`](skills/durable-plans/SKILL.md) | A plan must outlive the session | The file is the handoff, not anyone's memory. One file per change — goal, approach, task checklist, decision log. The code wins every conflict; update the plan in the deviating commit; retire it when the change lands. |
+| [`durable-knowledge`](skills/durable-knowledge/SKILL.md) | A project fact learned the hard way this session | The fix goes in git; the trap goes in the project's instructions file. Record only what the code misleads about, was learned by being wrong first, and is stable — with the trap and how to re-verify it, in the same commit as the fix. |
 | [`surgical-changes`](skills/surgical-changes/SKILL.md) | Editing existing code | The diff is the product: every line traces back to the request. No drive-by cleanups — report improvements, don't apply them. |
 | [`fail-loud`](skills/fail-loud/SKILL.md) | Writing error handling | A swallowed error is a bug with a delay timer. Every fallback is a product decision: "is the system actually correct when this branch executes?" |
 | [`safe-refactoring`](skills/safe-refactoring/SKILL.md) | Restructuring working code | Never mix restructure with behavior change. Green before, between, after. Grep beyond the compiler before renaming. |
@@ -63,6 +64,8 @@ flowchart TD
     RCD --> Loop
     RCD -->|attempts repeat<br/>without new evidence| Esc[escalate-dont-thrash<br/><i>stop, package findings, hand off</i>]
     Esc --> Handoff([📋 Clean handoff])
+    RCD -.->|cause was a hidden convention| Knowledge[durable-knowledge<br/><i>write the trap where the next session reads first</i>]
+    Esc -.-> Knowledge
     Debug -->|too slow| Measure[measure-before-optimizing<br/><i>profile before you tune</i>]
     Measure --> Loop
 
@@ -71,11 +74,12 @@ flowchart TD
     Feedback -.->|changes needed| Loop
     Feedback --> Done([✅ Actually done])
     Done -.->|plan on disk?<br/>retire it| Durable
+    Done -.->|learned something<br/>the hard way?| Knowledge
 
     classDef front fill:#e8f0fe,stroke:#4285f4,color:#1a1a1a;
     classDef impl fill:#e6f4ea,stroke:#34a853,color:#1a1a1a;
     classDef check fill:#fef7e0,stroke:#fbbc04,color:#1a1a1a;
-    class Explore,Clarify,Plan,Durable front;
+    class Explore,Clarify,Plan,Durable,Knowledge front;
     class Surgical,FailLoud,Refactor,Blast,Tests,Schema impl;
     class RCD,Esc,Measure,Verify,Feedback check;
 ```
@@ -87,6 +91,7 @@ flowchart TD
 - **`clarifying-requirements`** kicks in once the route is chosen but the details are fuzzy. It asks only the questions whose answers change the design, one at a time — no five-question dumps.
 - **`writing-solid-plans`** helps when the work spans many steps. It forces a plan a context-less engineer could execute: exact paths, real code, zero "TBD".
 - **`durable-plans`** takes over when the plan must outlive the session — multi-session features, several changes in flight, or work someone else will resume. One file per change on disk (goal, approach, task checklist, decision log), kept in sync in the same commits that change the code, and retired when the change lands. This is the spec-driven change lifecycle tools like OpenSpec provide, distilled to a convention — no CLI, no parallel spec of the whole system to keep from rotting.
+- **`durable-knowledge`** is its sibling for facts rather than plans. A game session that spent an afternoon learning that row 0 is the south edge, the model's z axis is negated, the barycentric weights come in a different order, and the sampler runs at 2× has paid for knowledge the next session will pay for again — unless it lands in the project's instructions file (`CLAUDE.md`, `AGENTS.md`) in the same commit as the fix. The skill is the judgment, not the storage: three tests for what qualifies (the code misleads, it was learned by being wrong first, it is stable), and an entry shape — the fact, the trap, how to re-verify — so a later session can check it instead of trusting it. Team-relevant facts go in the repo's instructions file; facts about you go in the harness's own memory.
 
 **The implementation loop — while writing code (green).**
 - **`surgical-changes`** keeps your diff honest in code you didn't just write — every line traces to the request, no drive-by cleanups.
@@ -164,7 +169,7 @@ This keeps the discipline auto-triggering by default, and hands you a manual swi
 
 > Edna said "no capes" to *supers*. If you're not super yet, you get a cape.
 
-The original no-cape thesis was never "models don't need coercion" — it was "**frontier** models don't." Weaker tiers (Sonnet, Haiku, older Opus) fail differently: they don't lack the discipline knowledge, they miss the *moment* to load it, and they follow short in-context rules far more reliably than judgment calls. Cape mode is the same 15 skills delivered coercively, for exactly those tiers. One knowledge base, two delivery modes.
+The original no-cape thesis was never "models don't need coercion" — it was "**frontier** models don't." Weaker tiers (Sonnet, Haiku, older Opus) fail differently: they don't lack the discipline knowledge, they miss the *moment* to load it, and they follow short in-context rules far more reliably than judgment calls. Cape mode is the same 16 skills delivered coercively, for exactly those tiers. One knowledge base, two delivery modes.
 
 ### What it changes
 
@@ -226,7 +231,7 @@ The `durable-plans` lifecycle distills the spec-driven change workflow of [Fissi
 
 這是一套給新世代強模型用的精簡工程紀律 skill。舊框架（如 superpowers）為了讓較弱的模型守紀律，加了大量強制性提示詞；強模型不需要被脅迫，但框架裡的真知識——決策規則、停止條件、證據要求——依然有價值。no-cape 留下知識，拿掉披風。
 
-這 15 個 skill 不是一條要你逐步走完的流水線，而是在開發旅程的各個位置「待命」的紀律——大多數任務只會碰到其中幾個。上方 **The harness** 一節有一張流程圖，標出每個 skill 在專案生命週期的哪個階段幫到你：從零發想（`exploring-approaches`）→ 釐清需求 → 規劃 → 實作循環 → 除錯 → 驗證收尾。一行的 bug 修正可以直接跳到除錯迴圈；從頭打造的新服務則從最上面開始。
+這 16 個 skill 不是一條要你逐步走完的流水線，而是在開發旅程的各個位置「待命」的紀律——大多數任務只會碰到其中幾個。上方 **The harness** 一節有一張流程圖，標出每個 skill 在專案生命週期的哪個階段幫到你：從零發想（`exploring-approaches`）→ 釐清需求 → 規劃 → 實作循環 → 除錯 → 驗證收尾。一行的 bug 修正可以直接跳到除錯迴圈；從頭打造的新服務則從最上面開始。
 
 ### 各 skill 說明
 
@@ -236,6 +241,7 @@ The `durable-plans` lifecycle distills the spec-driven change workflow of [Fissi
 | [`clarifying-requirements`](skills/clarifying-requirements/SKILL.md) | 需求不明確的新工作 | 只問「答案會改變設計」的問題——一次一題，優先給選擇題。先把綁在一起的範圍拆開。動手前先寫一段簡短設計。 |
 | [`writing-solid-plans`](skills/writing-solid-plans/SKILL.md) | 規劃多步驟的功能或重構 | 計畫是寫給零背景的讀者：精確路徑、真實程式碼、不留佔位字（「TBD」「加上適當的錯誤處理」）。交出去前自審涵蓋度與命名一致性。 |
 | [`durable-plans`](skills/durable-plans/SKILL.md) | 計畫必須活過這個 session | 交接靠檔案，不靠誰的記憶。一個變更一個檔案——目標、路線、任務清單、決策日誌。與程式碼衝突時以程式碼為準；偏離計畫的那個 commit 同步更新計畫；變更落地後讓計畫退役。 |
+| [`durable-knowledge`](skills/durable-knowledge/SKILL.md) | 這個 session 付出代價才學到的專案事實 | 修正進 git，陷阱進專案指示檔。只記三件都成立的：程式碼會誤導、是先錯過才學到的、而且是穩定的慣例——附上陷阱是什麼、怎麼重新驗證，和修正寫在同一個 commit。 |
 | [`surgical-changes`](skills/surgical-changes/SKILL.md) | 修改既有程式碼 | diff 就是成品：每一行都能追溯回需求。不順手清理——把可改進處回報出來，別直接動手。 |
 | [`fail-loud`](skills/fail-loud/SKILL.md) | 撰寫錯誤處理 | 被吞掉的錯誤是裝了延遲計時器的 bug。每個 fallback 都是產品決策：「這條分支執行時，系統真的還是對的嗎？」 |
 | [`safe-refactoring`](skills/safe-refactoring/SKILL.md) | 重構可運作的程式碼 | 絕不把重構和行為變更混在一起。改之前、改之間、改之後都要綠燈。改名前用 grep 掃過編譯器看不到的地方。 |
@@ -258,7 +264,7 @@ The `durable-plans` lifecycle distills the spec-driven change workflow of [Fissi
 
 ### Cape mode（披風模式）
 
-Edna 的「no capes!」是對超級英雄說的——還不是超級英雄的模型，就給它披風。no-cape 的命題從來不是「模型不需要脅迫」，而是「**前沿模型**不需要」。較弱的模型階層（Sonnet、Haiku、舊版 Opus）敗的方式不一樣：它們不缺紀律知識，缺的是「載入紀律的時機」，而且遵循短規則的能力遠勝於做判斷。Cape mode 就是同一套 15 個 skill 的強制投放版：
+Edna 的「no capes!」是對超級英雄說的——還不是超級英雄的模型，就給它披風。no-cape 的命題從來不是「模型不需要脅迫」，而是「**前沿模型**不需要」。較弱的模型階層（Sonnet、Haiku、舊版 Opus）敗的方式不一樣：它們不缺紀律知識，缺的是「載入紀律的時機」，而且遵循短規則的能力遠勝於做判斷。Cape mode 就是同一套 16 個 skill 的強制投放版：
 
 1. **指令式開場注入（SessionStart）**——把每個 skill 的核心紀律（kernel）濃縮成一行常駐規則一併注入，等於一份可攜帶的迷你 CLAUDE.md。就算模型從頭到尾沒載入任何 skill，底線規則已經在 context 裡。
 2. **指令式觸發（UserPromptSubmit）**——同一個關鍵字掃描器，lean mode 給的是指路，cape mode 給的是指令：「開始前先載入並遵循某某 skill」。把「何時該用」從模型的判斷變成 harness 的判斷。

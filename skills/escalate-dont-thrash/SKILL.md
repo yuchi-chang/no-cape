@@ -24,7 +24,7 @@ Other tells, name them honestly when they appear:
 2. **Leave the tree no worse than you found it.** Revert edits that didn't help; keep only changes you can justify on their own.
 3. **Write the handoff summary:**
    - The symptom: exact error, reproduction command, expected vs. actual.
-   - Verified facts — each with the evidence that established it.
+   - Verified facts — each with the evidence that established it; any that qualify under [[durable-knowledge]] go into the project's instructions file now, not only the summary.
    - Hypotheses eliminated — and what ruled each one out.
    - The failed attempts — what each changed and how it failed.
    - What remains unexplored or suspicious.
